@@ -1,7 +1,7 @@
 name: android_system_properties
-description: A new Flutter plugin project.
+description: Flutter package to get android system properties
 version: 0.0.1
-homepage:
+homepage: https://dashtoon.com
 
 environment:
   sdk: '>=2.19.2 <3.0.0'
