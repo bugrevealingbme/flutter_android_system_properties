@@ -7,8 +7,9 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry.Registrar
-import java.io.BufferedReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.IOException
 
 /** AndroidSystemPropertiesPlugin */
@@ -29,22 +30,26 @@ class AndroidSystemPropertiesPlugin: FlutterPlugin, MethodCallHandler {
       result.success("Android ${android.os.Build.VERSION.RELEASE}")
     } else if (call.method == "getSystemProperties") {
       var key = call.argument<String>("key")
-      result.success(getSystemProperties(key?: ""))
+      val response = runBlocking(Dispatchers.IO) {
+        getSystemProperties(key?: "")
+      }
+      result.success(response)
     } else {
       result.notImplemented()
     }
   }
 
-  private fun getSystemProperties(propName: String): String {
-    return try {
-      print("getprop $propName")
-      val p = Runtime.getRuntime().exec("getprop $propName")
-      val res = p.inputStream.bufferedReader().use { it.readText() }
-      return res
-    } catch (ex: IOException) {
-      ""
-    }
-  }
+	suspend fun getSystemProperties(propName: String): String = withContext(Dispatchers.IO) {
+		return@withContext try {
+			println("getprop $propName in coroutine")
+			print("getprop $propName")
+			val p = Runtime.getRuntime().exec("getprop $propName")
+			val res = p.inputStream.bufferedReader().use { it.readText() }
+			res
+		} catch (ex: IOException) {
+			""
+		}
+	}
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
     channel.setMethodCallHandler(null)
